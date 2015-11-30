@@ -1,0 +1,69 @@
+/*
+This sketch demonstrates how to send data from a Host
+to a Device in a Gazell network.
+
+Button A on the Host is used to toggle the Green led
+on the Device.
+
+Since the Device must initiate communication, the
+device "polls" the Host evey 200ms.
+*/
+
+#include <RFduinoGZLL.h>
+
+device_t role = DEVICE0;
+
+// pin for the Green Led
+int green_led = 3;
+int yellow_led = 5;
+int state = 4;
+
+void setup()
+{
+  pinMode(green_led, OUTPUT);
+  pinMode(yellow_led, OUTPUT);
+
+  // start the GZLL stack
+  RFduinoGZLL.begin(role);
+  Serial.begin(9600);
+}
+
+int lastTemp;
+
+void loop()
+{
+  //delay(200);
+
+  // request the state from the Host (send a 0 byte payload)
+  RFduinoGZLL.sendToHost(NULL, 0);
+   if(state > lastTemp)
+    {
+      digitalWrite(green_led, HIGH);
+      delay(200);
+      digitalWrite(green_led, LOW);
+      //state = -1;
+      lastTemp = state;
+    }
+    if(state < lastTemp)
+    {
+      digitalWrite(yellow_led, HIGH);
+      delay(200);
+      digitalWrite(yellow_led, LOW);
+      //state = -1;
+      lastTemp = state;
+    }
+
+    
+}
+
+void RFduinoGZLL_onReceive(device_t device, int rssi, char *data, int len)
+{
+  // ignore acknowledgement without payload
+    // update the Green led with the current state on the Host
+    state = data[0];
+    if (lastTemp != state)
+    {
+    Serial.print(state);
+    Serial.print('\n');
+    }
+}
